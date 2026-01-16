@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from .db import SessionLocal, init_db
 from .models import FuelPrice, InsurancePolicy, MaintenanceEvent, UserVehicle
 from .schemas import (
+    FuelNearbyResponse,
     FuelPriceResponse,
     InsuranceCreate,
     InsuranceResponse,
@@ -20,7 +21,7 @@ from .schemas import (
     VehicleResponse,
 )
 from .services.calc import compute_depreciation, compute_energy, compute_insurance, compute_maintenance
-from .services.fuel_prices import fetch_and_store_fuel_prices
+from .services.fuel_prices import fetch_and_store_fuel_prices, fetch_stations_by_postal_code
 
 app = FastAPI(title="Trip Cost API", version="0.1.0")
 
@@ -197,6 +198,14 @@ def create_insurance(payload: InsuranceCreate, db: Session = Depends(get_db)) ->
 def refresh_fuel_prices(db: Session = Depends(get_db)) -> dict[str, str]:
     fetch_and_store_fuel_prices(db)
     return {"status": "ok", "time": datetime.utcnow().isoformat()}
+
+
+@app.get("/api/fuel-prices/nearby", response_model=FuelNearbyResponse)
+def fuel_prices_nearby(postal_code: str) -> FuelNearbyResponse:
+    if not postal_code or len(postal_code.strip()) < 4:
+        raise HTTPException(status_code=400, detail="postal_code required")
+    payload = fetch_stations_by_postal_code(postal_code)
+    return FuelNearbyResponse(**payload)
 
 
 @app.post("/api/calc/trip", response_model=TripCalcResponse)

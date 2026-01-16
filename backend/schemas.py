@@ -25,6 +25,32 @@ class FuelPriceResponse(BaseModel):
     generated_at: datetime
 
 
+class StationPrice(BaseModel):
+    gasoline_95_e5: Optional[float] = None
+    diesel_a: Optional[float] = None
+
+
+class StationItem(BaseModel):
+    id: Optional[str] = None
+    label: Optional[str] = None
+    address: Optional[str] = None
+    postal_code: Optional[str] = None
+    municipality: Optional[str] = None
+    province: Optional[str] = None
+    schedule: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    prices: StationPrice
+
+
+class FuelNearbyResponse(BaseModel):
+    postal_code: str
+    stations: list[StationItem]
+    averages: dict[str, float]
+    source: str
+    fetched_at: Optional[datetime] = None
+
+
 class VehicleInput(BaseModel):
     powertrain_type: PowertrainType
     consumption_l_per_100km: Optional[float] = None

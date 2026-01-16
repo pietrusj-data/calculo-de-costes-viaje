@@ -176,6 +176,13 @@ select {
   box-shadow: 0 12px 24px rgba(255, 122, 26, 0.2);
 }
 
+.inline-group {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .primary {
   background: var(--accent);
   color: #fff;
@@ -263,6 +270,33 @@ select {
   padding: 0.6rem 0.8rem;
   border-radius: 0.7rem;
   background: rgba(15, 23, 42, 0.04);
+}
+
+.stations-block {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.stations-summary {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.stations-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.station-card {
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  padding: 0.7rem 0.9rem;
+  background: #fff;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.85rem;
 }
 
 .assumptions {

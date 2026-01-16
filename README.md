@@ -57,6 +57,7 @@ Si el backend corre en otro host/puerto, exporta `VITE_API_URL` antes de `npm ru
 
 - `GET /api/fuel-prices/latest`
 - `POST /api/fuel-prices/refresh`
+- `GET /api/fuel-prices/nearby?postal_code=`
 - `POST /api/calc/trip`
 
 Ver especificacion completa en `docs/spec.md`.

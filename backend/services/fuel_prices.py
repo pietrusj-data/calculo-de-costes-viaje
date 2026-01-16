@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 import requests
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ..models import FuelPrice
@@ -62,3 +63,61 @@ def fetch_and_store_fuel_prices(session: Session) -> None:
             )
         )
     session.commit()
+
+
+def fetch_stations_by_postal_code(postal_code: str) -> dict[str, object]:
+    response = requests.get(FUEL_PRICE_URL, timeout=30)
+    response.raise_for_status()
+    payload = response.json()
+    stations = payload.get("ListaEESSPrecio", [])
+    postal_code = postal_code.strip()
+    filtered = [s for s in stations if str(s.get("C.P.", "")).strip() == postal_code]
+    fetched_at_raw = payload.get("Fecha")
+    fetched_at = None
+    if fetched_at_raw:
+        try:
+            fetched_at = datetime.strptime(fetched_at_raw, "%d/%m/%Y %H:%M:%S")
+        except ValueError:
+            fetched_at = None
+
+    normalized = []
+    gas_prices = []
+    diesel_prices = []
+    for station in filtered:
+        gas = _parse_float(station.get("Precio Gasolina 95 E5", ""))
+        diesel = _parse_float(station.get("Precio Gasoleo A", ""))
+        if gas is not None:
+            gas_prices.append(gas)
+        if diesel is not None:
+            diesel_prices.append(diesel)
+        normalized.append(
+            {
+                "id": station.get("IDEESS"),
+                "label": station.get("Rótulo"),
+                "address": station.get("Dirección"),
+                "postal_code": station.get("C.P."),
+                "municipality": station.get("Municipio"),
+                "province": station.get("Provincia"),
+                "schedule": station.get("Horario"),
+                "latitude": _parse_float(station.get("Latitud", "")),
+                "longitude": _parse_float(station.get("Longitud (WGS84)", "")),
+                "prices": {
+                    "gasoline_95_e5": gas,
+                    "diesel_a": diesel,
+                },
+            }
+        )
+
+    averages = {}
+    if gas_prices:
+        averages["gasoline_95_e5"] = sum(gas_prices) / len(gas_prices)
+    if diesel_prices:
+        averages["diesel_a"] = sum(diesel_prices) / len(diesel_prices)
+
+    return {
+        "postal_code": postal_code,
+        "stations": normalized,
+        "averages": averages,
+        "source": "minetur-rest",
+        "fetched_at": fetched_at,
+    }

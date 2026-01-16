@@ -42,6 +42,7 @@
 - `GET /api/health`
 - `GET /api/fuel-prices/latest`
 - `POST /api/fuel-prices/refresh`
+- `GET /api/fuel-prices/nearby?postal_code=`
 - `GET /api/vehicles`
 - `POST /api/vehicles`
 - `GET /api/maintenance-events?vehicle_id=`

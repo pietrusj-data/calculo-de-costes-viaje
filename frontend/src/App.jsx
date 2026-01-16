@@ -53,6 +53,9 @@ export default function App() {
   const [calcResult, setCalcResult] = useState(null);
   const [error, setError] = useState('');
   const [maintenanceEvents, setMaintenanceEvents] = useState([]);
+  const [postalCode, setPostalCode] = useState('');
+  const [stationResults, setStationResults] = useState(null);
+  const [stationStatus, setStationStatus] = useState('idle');
   const [eventForm, setEventForm] = useState({
     category: 'oil_filter',
     event_date: '',
@@ -89,6 +92,28 @@ export default function App() {
       setPriceStatus('ready');
     } catch (err) {
       setPriceStatus('idle');
+    }
+  };
+
+  const fetchStationsByPostalCode = async () => {
+    if (!postalCode.trim()) return;
+    setStationStatus('loading');
+    setError('');
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/fuel-prices/nearby?postal_code=${encodeURIComponent(postalCode.trim())}`,
+      );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'No stations found');
+      }
+      const data = await response.json();
+      setStationResults(data);
+      setStationStatus('ready');
+    } catch (err) {
+      setStationResults(null);
+      setStationStatus('error');
+      setError(err.message || 'Station lookup failed');
     }
   };
 
@@ -350,6 +375,43 @@ export default function App() {
                 disabled={powertrainType === 'gasoline' || powertrainType === 'diesel'}
               />
             </InputRow>
+            <InputRow label="Codigo postal">
+              <div className="inline-group">
+                <input
+                  type="text"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                  placeholder="Ej. 28001"
+                />
+                <button type="button" className="ghost" onClick={fetchStationsByPostalCode}>
+                  {stationStatus === 'loading' ? 'Buscando...' : 'Buscar estaciones'}
+                </button>
+              </div>
+            </InputRow>
+            {stationResults ? (
+              <div className="stations-block">
+                <div className="stations-summary">
+                  <strong>{stationResults.stations.length} estaciones</strong>
+                  <span>
+                    Media G95: {stationResults.averages.gasoline_95_e5?.toFixed(3) || '--'} eur/l
+                  </span>
+                  <span>
+                    Media Diesel A: {stationResults.averages.diesel_a?.toFixed(3) || '--'} eur/l
+                  </span>
+                </div>
+                <div className="stations-list">
+                  {stationResults.stations.slice(0, 6).map((station) => (
+                    <div key={station.id} className="station-card">
+                      <strong>{station.label}</strong>
+                      <span>{station.address}</span>
+                      <span>
+                        G95: {station.prices.gasoline_95_e5 ?? '--'} | Diesel: {station.prices.diesel_a ?? '--'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="note">
               <strong>Fuente combustible:</strong>{' '}
               {fuelPriceSummary?.gasoline ? `${fuelPriceSummary.gasoline.source}` : 'sin datos'}
