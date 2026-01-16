@@ -47,6 +47,19 @@ def compute_energy(session: Session, payload: TripCalcRequest) -> EnergyResult:
     detail: dict[str, float] = {}
     route_multiplier = {"city": 1.15, "mixed": 1.0, "highway": 0.9}.get(payload.route_type, 1.0)
 
+    if payload.vehicle_id:
+        stored_vehicle = session.get(UserVehicle, payload.vehicle_id)
+        if stored_vehicle:
+            if vehicle.consumption_l_per_100km is None and stored_vehicle.consumption_l_per_100km:
+                vehicle.consumption_l_per_100km = stored_vehicle.consumption_l_per_100km
+                assumptions.append("consumption l/100km from saved vehicle")
+            if vehicle.consumption_kwh_per_100km is None and stored_vehicle.consumption_kwh_per_100km:
+                vehicle.consumption_kwh_per_100km = stored_vehicle.consumption_kwh_per_100km
+                assumptions.append("consumption kwh/100km from saved vehicle")
+            if vehicle.phev_electric_share is None and stored_vehicle.phev_electric_share:
+                vehicle.phev_electric_share = stored_vehicle.phev_electric_share
+                assumptions.append("PHEV share from saved vehicle")
+
     if vehicle.powertrain_type in {"gasoline", "diesel"}:
         fuel_type = "gasoline" if vehicle.powertrain_type == "gasoline" else "diesel"
         price = _latest_fuel_price(session, fuel_type)
