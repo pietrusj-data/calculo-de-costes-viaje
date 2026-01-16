@@ -524,7 +524,9 @@ export default function App() {
                   />
                 </InputRow>
               </div>
-              {(newVehicle.powertrain_type === 'gasoline' || newVehicle.powertrain_type === 'diesel') && (
+              {(newVehicle.powertrain_type === 'gasoline' ||
+                newVehicle.powertrain_type === 'diesel' ||
+                newVehicle.powertrain_type === 'phev') && (
                 <InputRow label="Consumo medio" hint="l/100km">
                   <input
                     type="number"
@@ -564,7 +566,7 @@ export default function App() {
                 <input type="number" value={annualKm} onChange={(e) => setAnnualKm(e.target.value)} />
               </InputRow>
             </div>
-            {(powertrainType === 'gasoline' || powertrainType === 'diesel') && (
+            {(powertrainType === 'gasoline' || powertrainType === 'diesel' || powertrainType === 'phev') && (
               <InputRow label="Consumo" hint="l/100km">
                 <input type="number" value={consumptionL} onChange={(e) => setConsumptionL(e.target.value)} />
               </InputRow>
