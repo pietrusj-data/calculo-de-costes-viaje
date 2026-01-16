@@ -90,6 +90,9 @@ def list_vehicles(db: Session = Depends(get_db)) -> list[VehicleResponse]:
             annual_km=item.annual_km,
             powertrain_type=item.powertrain_type,
             segment=item.segment,
+            consumption_l_per_100km=item.consumption_l_per_100km,
+            consumption_kwh_per_100km=item.consumption_kwh_per_100km,
+            phev_electric_share=item.phev_electric_share,
         )
         for item in vehicles
     ]
@@ -111,6 +114,9 @@ def create_vehicle(payload: VehicleCreate, db: Session = Depends(get_db)) -> Veh
         annual_km=vehicle.annual_km,
         powertrain_type=vehicle.powertrain_type,
         segment=vehicle.segment,
+        consumption_l_per_100km=vehicle.consumption_l_per_100km,
+        consumption_kwh_per_100km=vehicle.consumption_kwh_per_100km,
+        phev_electric_share=vehicle.phev_electric_share,
     )
 
 

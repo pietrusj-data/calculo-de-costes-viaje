@@ -38,7 +38,7 @@ export default function App() {
   const [annualKm, setAnnualKm] = useState(15000);
   const [segment, setSegment] = useState('compact');
   const [electricityPrice, setElectricityPrice] = useState(0.32);
-  const [vehicleId, setVehicleId] = useState(1);
+  const [vehicleId, setVehicleId] = useState('');
 
   const [insuranceAmount, setInsuranceAmount] = useState(520);
   const [insurancePeriod, setInsurancePeriod] = useState('annual');
@@ -56,6 +56,22 @@ export default function App() {
   const [postalCode, setPostalCode] = useState('');
   const [stationResults, setStationResults] = useState(null);
   const [stationStatus, setStationStatus] = useState('idle');
+  const [vehicles, setVehicles] = useState([]);
+  const [vehiclesStatus, setVehiclesStatus] = useState('idle');
+  const [vehicleSearch, setVehicleSearch] = useState('');
+  const [newVehicle, setNewVehicle] = useState({
+    user_id: 1,
+    make: '',
+    model: '',
+    year: '',
+    current_km: '',
+    annual_km: '',
+    powertrain_type: 'gasoline',
+    segment: 'generic',
+    consumption_l_per_100km: '',
+    consumption_kwh_per_100km: '',
+    phev_electric_share: '',
+  });
   const [eventForm, setEventForm] = useState({
     category: 'oil_filter',
     event_date: '',
@@ -117,11 +133,61 @@ export default function App() {
     }
   };
 
+  const fetchVehicles = async () => {
+    setVehiclesStatus('loading');
+    try {
+      const response = await fetch(`${API_BASE}/api/vehicles`);
+      if (!response.ok) throw new Error('Failed to fetch vehicles');
+      const data = await response.json();
+      setVehicles(data);
+      if (!vehicleId && data.length) {
+        setVehicleId(String(data[0].id));
+      }
+      setVehiclesStatus('ready');
+    } catch (err) {
+      setVehiclesStatus('error');
+      setVehicles([]);
+    }
+  };
+
+  const createVehicle = async () => {
+    setError('');
+    try {
+      const payload = {
+        ...newVehicle,
+        user_id: Number(newVehicle.user_id || 1),
+        year: newVehicle.year ? Number(newVehicle.year) : null,
+        current_km: newVehicle.current_km ? Number(newVehicle.current_km) : null,
+        annual_km: newVehicle.annual_km ? Number(newVehicle.annual_km) : null,
+        consumption_l_per_100km: newVehicle.consumption_l_per_100km
+          ? Number(newVehicle.consumption_l_per_100km)
+          : null,
+        consumption_kwh_per_100km: newVehicle.consumption_kwh_per_100km
+          ? Number(newVehicle.consumption_kwh_per_100km)
+          : null,
+        phev_electric_share: newVehicle.phev_electric_share ? Number(newVehicle.phev_electric_share) : null,
+      };
+      const response = await fetch(`${API_BASE}/api/vehicles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to create vehicle');
+      }
+      setNewVehicle({ ...newVehicle, make: '', model: '', year: '' });
+      fetchVehicles();
+    } catch (err) {
+      setError(err.message || 'Failed to create vehicle');
+    }
+  };
+
   const buildPayload = () => ({
     trip_km: Number(tripKm),
     trip_days: Number(tripDays),
     route_type: routeType,
-    vehicle_id: Number(vehicleId),
+    vehicle_id: vehicleId ? Number(vehicleId) : null,
     electricity_price_eur_per_kwh: powertrainType === 'bev' || powertrainType === 'phev' ? Number(electricityPrice) : null,
     vehicle: {
       powertrain_type: powertrainType,
@@ -174,7 +240,10 @@ export default function App() {
   };
 
   const fetchEvents = async () => {
-    if (!vehicleId) return;
+    if (!vehicleId) {
+      setMaintenanceEvents([]);
+      return;
+    }
     try {
       const response = await fetch(`${API_BASE}/api/maintenance-events?vehicle_id=${vehicleId}`);
       if (!response.ok) return;
@@ -188,6 +257,9 @@ export default function App() {
   const createEvent = async () => {
     setError('');
     try {
+      if (!vehicleId) {
+        throw new Error('Selecciona un vehiculo para guardar el evento');
+      }
       const payload = {
         vehicle_id: Number(vehicleId),
         category: eventForm.category,
@@ -212,11 +284,34 @@ export default function App() {
 
   useEffect(() => {
     fetchFuelPrices();
+    fetchVehicles();
   }, []);
 
   useEffect(() => {
     fetchEvents();
   }, [vehicleId]);
+
+  useEffect(() => {
+    if (!vehicleId) return;
+    const selected = vehicles.find((item) => String(item.id) === String(vehicleId));
+    if (!selected) return;
+    setMake(selected.make || '');
+    setModel(selected.model || '');
+    setYear(selected.year || '');
+    setCurrentKm(selected.current_km || 0);
+    setAnnualKm(selected.annual_km || 0);
+    setSegment(selected.segment || 'generic');
+    setPowertrainType(selected.powertrain_type || 'gasoline');
+    if (selected.consumption_l_per_100km) {
+      setConsumptionL(selected.consumption_l_per_100km);
+    }
+    if (selected.consumption_kwh_per_100km) {
+      setConsumptionKwh(selected.consumption_kwh_per_100km);
+    }
+    if (selected.phev_electric_share) {
+      setPhevShare(selected.phev_electric_share);
+    }
+  }, [vehicleId, vehicles]);
 
   const fuelPriceSummary = useMemo(() => {
     if (!fuelPrices?.items?.length) return null;
@@ -328,9 +423,139 @@ export default function App() {
                 <input type="text" value={segment} onChange={(e) => setSegment(e.target.value)} />
               </InputRow>
             </div>
-            <InputRow label="Vehicle ID (para costes reales)">
-              <input type="number" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} />
+            <InputRow label="Vehiculo (para costes reales)" hint="marca + modelo">
+              <div className="stack">
+                <input
+                  type="text"
+                  placeholder="Buscar por marca o modelo"
+                  value={vehicleSearch}
+                  onChange={(e) => setVehicleSearch(e.target.value)}
+                />
+                <select
+                  value={vehicleId}
+                  onChange={(e) => setVehicleId(e.target.value)}
+                  disabled={vehiclesStatus === 'loading'}
+                >
+                  <option value="">Selecciona un vehiculo</option>
+                  {vehicles
+                    .filter((item) => {
+                      if (!vehicleSearch.trim()) return true;
+                      const term = vehicleSearch.toLowerCase();
+                      return `${item.make || ''} ${item.model || ''}`.toLowerCase().includes(term);
+                    })
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.make || 'Marca'} {item.model || 'Modelo'} {item.year ? `(${item.year})` : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </InputRow>
+            <div className="note">
+              Si tu vehiculo no aparece, puedes crearlo abajo con tus datos y consumo medio.
+            </div>
+            <div className="maintenance-form">
+              <h4>Crear vehiculo</h4>
+              <div className="grid-two">
+                <InputRow label="Marca">
+                  <input
+                    type="text"
+                    value={newVehicle.make}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
+                  />
+                </InputRow>
+                <InputRow label="Modelo">
+                  <input
+                    type="text"
+                    value={newVehicle.model}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
+                  />
+                </InputRow>
+              </div>
+              <div className="grid-two">
+                <InputRow label="Ano">
+                  <input
+                    type="number"
+                    value={newVehicle.year}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
+                  />
+                </InputRow>
+                <InputRow label="Segmento">
+                  <input
+                    type="text"
+                    value={newVehicle.segment}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, segment: e.target.value })}
+                  />
+                </InputRow>
+              </div>
+              <InputRow label="Tipo de coche">
+                <div className="pill-group">
+                  {['gasoline', 'diesel', 'phev', 'bev'].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      className={newVehicle.powertrain_type === type ? 'pill active' : 'pill'}
+                      onClick={() => setNewVehicle({ ...newVehicle, powertrain_type: type })}
+                    >
+                      {type === 'gasoline'
+                        ? 'Gasolina'
+                        : type === 'diesel'
+                          ? 'Diesel'
+                          : type === 'phev'
+                            ? 'PHEV'
+                            : 'BEV'}
+                    </button>
+                  ))}
+                </div>
+              </InputRow>
+              <div className="grid-two">
+                <InputRow label="Km actuales">
+                  <input
+                    type="number"
+                    value={newVehicle.current_km}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
+                  />
+                </InputRow>
+                <InputRow label="Km anuales">
+                  <input
+                    type="number"
+                    value={newVehicle.annual_km}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, annual_km: e.target.value })}
+                  />
+                </InputRow>
+              </div>
+              {(newVehicle.powertrain_type === 'gasoline' || newVehicle.powertrain_type === 'diesel') && (
+                <InputRow label="Consumo medio" hint="l/100km">
+                  <input
+                    type="number"
+                    value={newVehicle.consumption_l_per_100km}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, consumption_l_per_100km: e.target.value })}
+                  />
+                </InputRow>
+              )}
+              {(newVehicle.powertrain_type === 'bev' || newVehicle.powertrain_type === 'phev') && (
+                <InputRow label="Consumo medio" hint="kwh/100km">
+                  <input
+                    type="number"
+                    value={newVehicle.consumption_kwh_per_100km}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, consumption_kwh_per_100km: e.target.value })}
+                  />
+                </InputRow>
+              )}
+              {newVehicle.powertrain_type === 'phev' && (
+                <InputRow label="Porcentaje electrico" hint="0-1">
+                  <input
+                    type="number"
+                    step="0.05"
+                    value={newVehicle.phev_electric_share}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, phev_electric_share: e.target.value })}
+                  />
+                </InputRow>
+              )}
+              <button type="button" className="ghost" onClick={createVehicle}>
+                Guardar vehiculo
+              </button>
+            </div>
             <div className="grid-two">
               <InputRow label="Km actuales">
                 <input type="number" value={currentKm} onChange={(e) => setCurrentKm(e.target.value)} />
@@ -583,8 +808,10 @@ export default function App() {
                   ))}
                 </ul>
               </div>
-            ) : (
+            ) : vehicleId ? (
               <div className="note">No hay eventos guardados para este vehiculo.</div>
+            ) : (
+              <div className="note">Selecciona un vehiculo para ver eventos reales.</div>
             )}
           </div>
         </div>

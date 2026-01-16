@@ -22,6 +22,7 @@ def main() -> None:
                 annual_km=15000,
                 powertrain_type="gasoline",
                 segment="compact",
+                consumption_l_per_100km=6.4,
             )
             session.add(vehicle)
 

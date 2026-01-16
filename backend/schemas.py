@@ -73,6 +73,9 @@ class VehicleCreate(BaseModel):
     annual_km: Optional[float] = None
     powertrain_type: PowertrainType
     segment: Optional[str] = "generic"
+    consumption_l_per_100km: Optional[float] = None
+    consumption_kwh_per_100km: Optional[float] = None
+    phev_electric_share: Optional[float] = None
 
 
 class VehicleResponse(VehicleCreate):

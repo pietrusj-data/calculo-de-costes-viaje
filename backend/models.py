@@ -30,6 +30,9 @@ class UserVehicle(Base):
     annual_km: Mapped[float | None] = mapped_column(Float)
     powertrain_type: Mapped[str] = mapped_column(String(20), nullable=False)
     segment: Mapped[str] = mapped_column(String(30), default="generic")
+    consumption_l_per_100km: Mapped[float | None] = mapped_column(Float)
+    consumption_kwh_per_100km: Mapped[float | None] = mapped_column(Float)
+    phev_electric_share: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="vehicles")

@@ -31,6 +31,8 @@ python -m venv .venv
 .\.venv\Scripts\python backend\seed.py
 ```
 
+Si ya existe `data/app.db` y quieres nuevas columnas (consumos medios), borra el archivo y vuelve a ejecutar el seed.
+
 3) (Opcional) Actualizar precios oficiales de carburante en Espana:
 
 ```bash
