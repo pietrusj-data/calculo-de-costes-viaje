@@ -30,7 +30,7 @@ export default function App() {
   const [powertrainType, setPowertrainType] = useState('gasoline');
   const [consumptionL, setConsumptionL] = useState(6.5);
   const [consumptionKwh, setConsumptionKwh] = useState(17.5);
-  const [phevShare, setPhevShare] = useState(0.45);
+  const [phevElectricKm, setPhevElectricKm] = useState(0);
   const [make, setMake] = useState('Seat');
   const [model, setModel] = useState('Leon');
   const [year, setYear] = useState(2019);
@@ -70,7 +70,7 @@ export default function App() {
     segment: 'generic',
     consumption_l_per_100km: '',
     consumption_kwh_per_100km: '',
-    phev_electric_share: '',
+    phev_electric_km_per_100: '',
   });
   const [eventForm, setEventForm] = useState({
     category: 'oil_filter',
@@ -165,7 +165,9 @@ export default function App() {
         consumption_kwh_per_100km: newVehicle.consumption_kwh_per_100km
           ? Number(newVehicle.consumption_kwh_per_100km)
           : null,
-        phev_electric_share: newVehicle.phev_electric_share ? Number(newVehicle.phev_electric_share) : null,
+        phev_electric_share: newVehicle.phev_electric_km_per_100
+          ? Number(newVehicle.phev_electric_km_per_100) / 100
+          : null,
       };
       const response = await fetch(`${API_BASE}/api/vehicles`, {
         method: 'POST',
@@ -197,7 +199,9 @@ export default function App() {
       consumption_kwh_per_100km: powertrainType === 'bev' || powertrainType === 'phev'
         ? Number(consumptionKwh)
         : null,
-      phev_electric_share: powertrainType === 'phev' ? Number(phevShare) : null,
+      phev_electric_share: powertrainType === 'phev'
+        ? Math.min(Number(phevElectricKm) || 0, Number(tripKm) || 0) / (Number(tripKm) || 1)
+        : null,
       make,
       model,
       year: Number(year),
@@ -309,7 +313,7 @@ export default function App() {
       setConsumptionKwh(selected.consumption_kwh_per_100km);
     }
     if (selected.phev_electric_share) {
-      setPhevShare(selected.phev_electric_share);
+      setPhevElectricKm(selected.phev_electric_share * (Number(tripKm) || 0));
     }
   }, [vehicleId, vehicles]);
 
@@ -545,12 +549,12 @@ export default function App() {
                 </InputRow>
               )}
               {newVehicle.powertrain_type === 'phev' && (
-                <InputRow label="Porcentaje electrico" hint="0-1">
+                <InputRow label="Km electricos por 100 km" hint="ej. 50">
                   <input
                     type="number"
-                    step="0.05"
-                    value={newVehicle.phev_electric_share}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, phev_electric_share: e.target.value })}
+                    step="1"
+                    value={newVehicle.phev_electric_km_per_100}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, phev_electric_km_per_100: e.target.value })}
                   />
                 </InputRow>
               )}
@@ -577,8 +581,12 @@ export default function App() {
               </InputRow>
             )}
             {powertrainType === 'phev' && (
-              <InputRow label="Porcentaje electrico" hint="0-1">
-                <input type="number" step="0.05" value={phevShare} onChange={(e) => setPhevShare(e.target.value)} />
+              <InputRow label="Km en electrico (este viaje)" hint="km">
+                <input
+                  type="number"
+                  value={phevElectricKm}
+                  onChange={(e) => setPhevElectricKm(e.target.value)}
+                />
               </InputRow>
             )}
           </div>
