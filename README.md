@@ -2,6 +2,20 @@
 
 Aplicacion web (MVP) para calcular el coste real de un viaje en coche con desglose de energia, mantenimiento, depreciacion y seguro. Incluye backend FastAPI + SQLite y frontend React.
 
+## Demo / Deploy
+
+Workflow de deploy en GitHub Actions:
+
+- Frontend en Vercel (workflow `Deploy`)
+- Backend en Render via deploy hook
+
+Secrets requeridos en GitHub:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+- `RENDER_DEPLOY_HOOK`
+
 ## Backend (FastAPI)
 
 1) Crear entorno e instalar dependencias:
@@ -46,6 +60,10 @@ Si el backend corre en otro host/puerto, exporta `VITE_API_URL` antes de `npm ru
 - `POST /api/calc/trip`
 
 Ver especificacion completa en `docs/spec.md`.
+
+## GitHub
+
+Issues y Projects habilitados. Hay plantillas de bug/feature en `.github/ISSUE_TEMPLATE/`.
 
 ## Importar datasets (Kaggle)
 

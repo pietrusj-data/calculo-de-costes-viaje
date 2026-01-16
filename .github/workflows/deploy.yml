@@ -1,0 +1,41 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-frontend-vercel:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Deploy frontend to Vercel
+        working-directory: frontend
+        run: |
+          vercel pull --yes --environment=production --token $VERCEL_TOKEN
+          vercel build --prod --token $VERCEL_TOKEN
+          vercel deploy --prebuilt --prod --token $VERCEL_TOKEN
+
+  deploy-backend-render:
+    runs-on: ubuntu-latest
+    needs: deploy-frontend-vercel
+    env:
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "Missing RENDER_DEPLOY_HOOK secret"
+            exit 1
+          fi
+          curl -X POST "$RENDER_DEPLOY_HOOK"
