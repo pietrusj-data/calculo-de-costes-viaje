@@ -30,6 +30,7 @@ class UserVehicle(Base):
     annual_km: Mapped[float | None] = mapped_column(Float)
     powertrain_type: Mapped[str] = mapped_column(String(20), nullable=False)
     segment: Mapped[str] = mapped_column(String(30), default="generic")
+    market_value_eur: Mapped[float | None] = mapped_column(Float)
     consumption_l_per_100km: Mapped[float | None] = mapped_column(Float)
     consumption_kwh_per_100km: Mapped[float | None] = mapped_column(Float)
     phev_electric_share: Mapped[float | None] = mapped_column(Float)

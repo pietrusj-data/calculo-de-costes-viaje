@@ -56,6 +56,7 @@ class VehicleInput(BaseModel):
     consumption_l_per_100km: Optional[float] = None
     consumption_kwh_per_100km: Optional[float] = None
     phev_electric_share: Optional[float] = Field(None, ge=0, le=1)
+    market_value_eur: Optional[float] = None
     make: Optional[str] = None
     model: Optional[str] = None
     year: Optional[int] = None
@@ -73,6 +74,7 @@ class VehicleCreate(BaseModel):
     annual_km: Optional[float] = None
     powertrain_type: PowertrainType
     segment: Optional[str] = "generic"
+    market_value_eur: Optional[float] = None
     consumption_l_per_100km: Optional[float] = None
     consumption_kwh_per_100km: Optional[float] = None
     phev_electric_share: Optional[float] = None

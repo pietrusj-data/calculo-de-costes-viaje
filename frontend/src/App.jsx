@@ -37,6 +37,7 @@ export default function App() {
   const [currentKm, setCurrentKm] = useState(62000);
   const [annualKm, setAnnualKm] = useState(15000);
   const [segment, setSegment] = useState('compact');
+  const [marketValue, setMarketValue] = useState('');
   const [electricityPrice, setElectricityPrice] = useState(0.32);
   const [vehicleId, setVehicleId] = useState('');
 
@@ -59,6 +60,7 @@ export default function App() {
   const [vehicles, setVehicles] = useState([]);
   const [vehiclesStatus, setVehiclesStatus] = useState('idle');
   const [vehicleSearch, setVehicleSearch] = useState('');
+  const [showCreateVehicle, setShowCreateVehicle] = useState(false);
   const [newVehicle, setNewVehicle] = useState({
     user_id: 1,
     make: '',
@@ -68,6 +70,7 @@ export default function App() {
     annual_km: '',
     powertrain_type: 'gasoline',
     segment: 'generic',
+    market_value_eur: '',
     consumption_l_per_100km: '',
     consumption_kwh_per_100km: '',
     phev_electric_km_per_100: '',
@@ -159,6 +162,7 @@ export default function App() {
         year: newVehicle.year ? Number(newVehicle.year) : null,
         current_km: newVehicle.current_km ? Number(newVehicle.current_km) : null,
         annual_km: newVehicle.annual_km ? Number(newVehicle.annual_km) : null,
+        market_value_eur: newVehicle.market_value_eur ? Number(newVehicle.market_value_eur) : null,
         consumption_l_per_100km: newVehicle.consumption_l_per_100km
           ? Number(newVehicle.consumption_l_per_100km)
           : null,
@@ -202,6 +206,7 @@ export default function App() {
       phev_electric_share: powertrainType === 'phev'
         ? Math.min(Number(phevElectricKm) || 0, Number(tripKm) || 0) / (Number(tripKm) || 1)
         : null,
+      market_value_eur: marketValue ? Number(marketValue) : null,
       make,
       model,
       year: Number(year),
@@ -306,6 +311,7 @@ export default function App() {
     setAnnualKm(selected.annual_km || 0);
     setSegment(selected.segment || 'generic');
     setPowertrainType(selected.powertrain_type || 'gasoline');
+    setMarketValue(selected.market_value_eur || '');
     if (selected.consumption_l_per_100km) {
       setConsumptionL(selected.consumption_l_per_100km);
     }
@@ -458,110 +464,6 @@ export default function App() {
             <div className="note">
               Si tu vehiculo no aparece, puedes crearlo abajo con tus datos y consumo medio.
             </div>
-            <div className="maintenance-form">
-              <h4>Crear vehiculo</h4>
-              <div className="grid-two">
-                <InputRow label="Marca">
-                  <input
-                    type="text"
-                    value={newVehicle.make}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
-                  />
-                </InputRow>
-                <InputRow label="Modelo">
-                  <input
-                    type="text"
-                    value={newVehicle.model}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
-                  />
-                </InputRow>
-              </div>
-              <div className="grid-two">
-                <InputRow label="Ano">
-                  <input
-                    type="number"
-                    value={newVehicle.year}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
-                  />
-                </InputRow>
-                <InputRow label="Segmento">
-                  <input
-                    type="text"
-                    value={newVehicle.segment}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, segment: e.target.value })}
-                  />
-                </InputRow>
-              </div>
-              <InputRow label="Tipo de coche">
-                <div className="pill-group">
-                  {['gasoline', 'diesel', 'phev', 'bev'].map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      className={newVehicle.powertrain_type === type ? 'pill active' : 'pill'}
-                      onClick={() => setNewVehicle({ ...newVehicle, powertrain_type: type })}
-                    >
-                      {type === 'gasoline'
-                        ? 'Gasolina'
-                        : type === 'diesel'
-                          ? 'Diesel'
-                          : type === 'phev'
-                            ? 'PHEV'
-                            : 'BEV'}
-                    </button>
-                  ))}
-                </div>
-              </InputRow>
-              <div className="grid-two">
-                <InputRow label="Km actuales">
-                  <input
-                    type="number"
-                    value={newVehicle.current_km}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
-                  />
-                </InputRow>
-                <InputRow label="Km anuales">
-                  <input
-                    type="number"
-                    value={newVehicle.annual_km}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, annual_km: e.target.value })}
-                  />
-                </InputRow>
-              </div>
-              {(newVehicle.powertrain_type === 'gasoline' ||
-                newVehicle.powertrain_type === 'diesel' ||
-                newVehicle.powertrain_type === 'phev') && (
-                <InputRow label="Consumo medio" hint="l/100km">
-                  <input
-                    type="number"
-                    value={newVehicle.consumption_l_per_100km}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, consumption_l_per_100km: e.target.value })}
-                  />
-                </InputRow>
-              )}
-              {(newVehicle.powertrain_type === 'bev' || newVehicle.powertrain_type === 'phev') && (
-                <InputRow label="Consumo medio" hint="kwh/100km">
-                  <input
-                    type="number"
-                    value={newVehicle.consumption_kwh_per_100km}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, consumption_kwh_per_100km: e.target.value })}
-                  />
-                </InputRow>
-              )}
-              {newVehicle.powertrain_type === 'phev' && (
-                <InputRow label="Km electricos por 100 km" hint="ej. 50">
-                  <input
-                    type="number"
-                    step="1"
-                    value={newVehicle.phev_electric_km_per_100}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, phev_electric_km_per_100: e.target.value })}
-                  />
-                </InputRow>
-              )}
-              <button type="button" className="ghost" onClick={createVehicle}>
-                Guardar vehiculo
-              </button>
-            </div>
             <div className="grid-two">
               <InputRow label="Km actuales">
                 <input type="number" value={currentKm} onChange={(e) => setCurrentKm(e.target.value)} />
@@ -570,6 +472,9 @@ export default function App() {
                 <input type="number" value={annualKm} onChange={(e) => setAnnualKm(e.target.value)} />
               </InputRow>
             </div>
+            <InputRow label="Valor actual estimado" hint="eur">
+              <input type="number" value={marketValue} onChange={(e) => setMarketValue(e.target.value)} />
+            </InputRow>
             {(powertrainType === 'gasoline' || powertrainType === 'diesel' || powertrainType === 'phev') && (
               <InputRow label="Consumo" hint="l/100km">
                 <input type="number" value={consumptionL} onChange={(e) => setConsumptionL(e.target.value)} />
@@ -589,6 +494,122 @@ export default function App() {
                 />
               </InputRow>
             )}
+            <button type="button" className="ghost" onClick={() => setShowCreateVehicle(!showCreateVehicle)}>
+              {showCreateVehicle ? 'Ocultar crear vehiculo' : 'Crear vehiculo'}
+            </button>
+            {showCreateVehicle ? (
+              <div className="maintenance-form">
+                <h4>Crear vehiculo</h4>
+                <div className="grid-two">
+                  <InputRow label="Marca">
+                    <input
+                      type="text"
+                      value={newVehicle.make}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
+                    />
+                  </InputRow>
+                  <InputRow label="Modelo">
+                    <input
+                      type="text"
+                      value={newVehicle.model}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
+                    />
+                  </InputRow>
+                </div>
+                <div className="grid-two">
+                  <InputRow label="Ano">
+                    <input
+                      type="number"
+                      value={newVehicle.year}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
+                    />
+                  </InputRow>
+                  <InputRow label="Segmento">
+                    <input
+                      type="text"
+                      value={newVehicle.segment}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, segment: e.target.value })}
+                    />
+                  </InputRow>
+                </div>
+                <InputRow label="Tipo de coche">
+                  <div className="pill-group">
+                    {['gasoline', 'diesel', 'phev', 'bev'].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        className={newVehicle.powertrain_type === type ? 'pill active' : 'pill'}
+                        onClick={() => setNewVehicle({ ...newVehicle, powertrain_type: type })}
+                      >
+                        {type === 'gasoline'
+                          ? 'Gasolina'
+                          : type === 'diesel'
+                            ? 'Diesel'
+                            : type === 'phev'
+                              ? 'PHEV'
+                              : 'BEV'}
+                      </button>
+                    ))}
+                  </div>
+                </InputRow>
+                <div className="grid-two">
+                  <InputRow label="Km actuales">
+                    <input
+                      type="number"
+                      value={newVehicle.current_km}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
+                    />
+                  </InputRow>
+                  <InputRow label="Km anuales">
+                    <input
+                      type="number"
+                      value={newVehicle.annual_km}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, annual_km: e.target.value })}
+                    />
+                  </InputRow>
+                </div>
+                <InputRow label="Valor actual estimado" hint="eur">
+                  <input
+                    type="number"
+                    value={newVehicle.market_value_eur}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, market_value_eur: e.target.value })}
+                  />
+                </InputRow>
+                {(newVehicle.powertrain_type === 'gasoline' ||
+                  newVehicle.powertrain_type === 'diesel' ||
+                  newVehicle.powertrain_type === 'phev') && (
+                  <InputRow label="Consumo medio" hint="l/100km">
+                    <input
+                      type="number"
+                      value={newVehicle.consumption_l_per_100km}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, consumption_l_per_100km: e.target.value })}
+                    />
+                  </InputRow>
+                )}
+                {(newVehicle.powertrain_type === 'bev' || newVehicle.powertrain_type === 'phev') && (
+                  <InputRow label="Consumo medio" hint="kwh/100km">
+                    <input
+                      type="number"
+                      value={newVehicle.consumption_kwh_per_100km}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, consumption_kwh_per_100km: e.target.value })}
+                    />
+                  </InputRow>
+                )}
+                {newVehicle.powertrain_type === 'phev' && (
+                  <InputRow label="Km electricos por 100 km" hint="ej. 50">
+                    <input
+                      type="number"
+                      step="1"
+                      value={newVehicle.phev_electric_km_per_100}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, phev_electric_km_per_100: e.target.value })}
+                    />
+                  </InputRow>
+                )}
+                <button type="button" className="ghost" onClick={createVehicle}>
+                  Guardar vehiculo
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

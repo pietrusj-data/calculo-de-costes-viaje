@@ -239,6 +239,13 @@ def compute_insurance(payload: TripCalcRequest) -> MaintenanceResult:
 def compute_depreciation(session: Session, payload: TripCalcRequest, vehicle_id: int | None) -> DepreciationResult:
     vehicle = payload.vehicle
     segment = vehicle.segment or "generic"
+    assumptions = [
+        "depreciation model",
+    ]
+    if payload.vehicle_id and vehicle.market_value_eur is None:
+        stored_vehicle = session.get(UserVehicle, payload.vehicle_id)
+        if stored_vehicle and stored_vehicle.market_value_eur:
+            vehicle.market_value_eur = stored_vehicle.market_value_eur
     model = (
         session.execute(
             select(DepreciationModel).where(
@@ -273,12 +280,19 @@ def compute_depreciation(session: Session, payload: TripCalcRequest, vehicle_id:
     total_life_km = max(vehicle.annual_km or 15000, 1) * 12
     per_km = (model.base_value_eur - residual_floor) / total_life_km
     amount = per_km * payload.trip_km
+    if vehicle.market_value_eur:
+        residual_value = vehicle.market_value_eur
+        residual_floor = min(residual_value, model.base_value_eur * model.min_residual_pct)
+        per_km = max((model.base_value_eur - residual_value) / total_life_km, 0)
+        amount = per_km * payload.trip_km
+        assumptions.append("market value provided by user")
     return DepreciationResult(
         per_km_eur=per_km,
         amount_eur=amount,
         residual_value_eur=residual_value,
         source="depreciation model",
-        assumptions=[
+        assumptions=assumptions
+        + [
             f"annual_rate {model.annual_rate:.2f}",
             f"km_rate {model.km_rate:.2f} per 10k km",
             f"min_residual_pct {model.min_residual_pct:.2f}",
