@@ -204,7 +204,10 @@ def create_insurance(payload: InsuranceCreate, db: Session = Depends(get_db)) ->
 
 @app.post("/api/fuel-prices/refresh")
 def refresh_fuel_prices(db: Session = Depends(get_db)) -> dict[str, str]:
-    fetch_and_store_fuel_prices(db)
+    try:
+        fetch_and_store_fuel_prices(db)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"status": "ok", "time": datetime.utcnow().isoformat()}
 
 
@@ -212,7 +215,10 @@ def refresh_fuel_prices(db: Session = Depends(get_db)) -> dict[str, str]:
 def fuel_prices_nearby(postal_code: str) -> FuelNearbyResponse:
     if not postal_code or len(postal_code.strip()) < 4:
         raise HTTPException(status_code=400, detail="postal_code required")
-    payload = fetch_stations_by_postal_code(postal_code)
+    try:
+        payload = fetch_stations_by_postal_code(postal_code)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     return FuelNearbyResponse(**payload)
 
 

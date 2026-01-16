@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from time import sleep
 
 import requests
 from datetime import datetime
@@ -12,6 +13,10 @@ FUEL_PRICE_URL = (
     "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/"
     "PreciosCarburantes/EstacionesTerrestres/"
 )
+DEFAULT_HEADERS = {
+    "User-Agent": "VehicleAnalytics/1.0 (+https://github.com/pietrusj-data/calculo-de-costes-viaje)",
+    "Accept": "application/json,text/json,*/*",
+}
 
 
 def _parse_float(value: str) -> float | None:
@@ -23,10 +28,21 @@ def _parse_float(value: str) -> float | None:
         return None
 
 
+def _fetch_fuel_payload() -> dict:
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            response = requests.get(FUEL_PRICE_URL, timeout=30, headers=DEFAULT_HEADERS)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as exc:
+            last_error = exc
+            sleep(1.5 * (attempt + 1))
+    raise RuntimeError("Failed to reach fuel price service") from last_error
+
+
 def fetch_and_store_fuel_prices(session: Session) -> None:
-    response = requests.get(FUEL_PRICE_URL, timeout=30)
-    response.raise_for_status()
-    payload = response.json()
+    payload = _fetch_fuel_payload()
     stations = payload.get("ListaEESSPrecio", [])
 
     gasoline_prices: list[float] = []
@@ -66,9 +82,7 @@ def fetch_and_store_fuel_prices(session: Session) -> None:
 
 
 def fetch_stations_by_postal_code(postal_code: str) -> dict[str, object]:
-    response = requests.get(FUEL_PRICE_URL, timeout=30)
-    response.raise_for_status()
-    payload = response.json()
+    payload = _fetch_fuel_payload()
     stations = payload.get("ListaEESSPrecio", [])
     postal_code = postal_code.strip()
     filtered = [s for s in stations if str(s.get("C.P.", "")).strip() == postal_code]
