@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .db import SessionLocal, init_db
-from .models import FuelPrice, InsurancePolicy, MaintenanceEvent, UserVehicle
+from sqlalchemy import or_
+
+from .models import FuelPrice, InsurancePolicy, MaintenanceEvent, UserVehicle, VehicleCatalog
 from .schemas import (
     FuelNearbyResponse,
     FuelPriceResponse,
@@ -19,6 +21,7 @@ from .schemas import (
     TripCalcResponse,
     VehicleCreate,
     VehicleResponse,
+    CatalogVehicleResponse,
 )
 from .services.calc import compute_depreciation, compute_energy, compute_insurance, compute_maintenance
 from .services.fuel_prices import fetch_and_store_fuel_prices, fetch_stations_by_postal_code
@@ -94,6 +97,7 @@ def list_vehicles(db: Session = Depends(get_db)) -> list[VehicleResponse]:
             consumption_l_per_100km=item.consumption_l_per_100km,
             consumption_kwh_per_100km=item.consumption_kwh_per_100km,
             phev_electric_share=item.phev_electric_share,
+            catalog_vehicle_id=item.catalog_vehicle_id,
         )
         for item in vehicles
     ]
@@ -119,7 +123,41 @@ def create_vehicle(payload: VehicleCreate, db: Session = Depends(get_db)) -> Veh
         consumption_l_per_100km=vehicle.consumption_l_per_100km,
         consumption_kwh_per_100km=vehicle.consumption_kwh_per_100km,
         phev_electric_share=vehicle.phev_electric_share,
+        catalog_vehicle_id=vehicle.catalog_vehicle_id,
     )
+
+
+@app.get("/api/catalog/vehicles", response_model=list[CatalogVehicleResponse])
+def search_catalog(query: str = "", limit: int = 20, db: Session = Depends(get_db)) -> list[CatalogVehicleResponse]:
+    stmt = db.query(VehicleCatalog)
+    if query:
+        like = f"%{query.lower()}%"
+        stmt = stmt.filter(
+            or_(
+                VehicleCatalog.brand.ilike(like),
+                VehicleCatalog.model.ilike(like),
+                VehicleCatalog.variant.ilike(like),
+            )
+        )
+    results = stmt.order_by(VehicleCatalog.brand.asc()).limit(limit).all()
+    return [
+        CatalogVehicleResponse(
+            id=item.id,
+            brand=item.brand,
+            model=item.model,
+            variant=item.variant,
+            fuel_type=item.fuel_type,
+            category=item.category,
+            engine_cc=item.engine_cc,
+            classification=item.classification,
+            consumption_min=item.consumption_min,
+            consumption_max=item.consumption_max,
+            emissions_min=item.emissions_min,
+            emissions_max=item.emissions_max,
+            source=item.source,
+        )
+        for item in results
+    ]
 
 
 @app.get("/api/maintenance-events", response_model=list[MaintenanceEventResponse])

@@ -61,6 +61,10 @@ export default function App() {
   const [vehiclesStatus, setVehiclesStatus] = useState('idle');
   const [vehicleSearch, setVehicleSearch] = useState('');
   const [showCreateVehicle, setShowCreateVehicle] = useState(false);
+  const [catalogQuery, setCatalogQuery] = useState('');
+  const [catalogResults, setCatalogResults] = useState([]);
+  const [catalogStatus, setCatalogStatus] = useState('idle');
+  const [selectedCatalogId, setSelectedCatalogId] = useState('');
   const [newVehicle, setNewVehicle] = useState({
     user_id: 1,
     make: '',
@@ -71,6 +75,7 @@ export default function App() {
     powertrain_type: 'gasoline',
     segment: 'generic',
     market_value_eur: '',
+    catalog_vehicle_id: '',
     consumption_l_per_100km: '',
     consumption_kwh_per_100km: '',
     phev_electric_km_per_100: '',
@@ -153,6 +158,50 @@ export default function App() {
     }
   };
 
+  const fetchCatalog = async (query) => {
+    if (!query.trim()) {
+      setCatalogResults([]);
+      return;
+    }
+    setCatalogStatus('loading');
+    try {
+      const response = await fetch(`${API_BASE}/api/catalog/vehicles?query=${encodeURIComponent(query)}&limit=20`);
+      if (!response.ok) throw new Error('Failed to fetch catalog');
+      const data = await response.json();
+      setCatalogResults(data);
+      setCatalogStatus('ready');
+    } catch (err) {
+      setCatalogStatus('error');
+      setCatalogResults([]);
+    }
+  };
+
+  const applyCatalogVehicle = (item) => {
+    if (!item) return;
+    const avgConsumption =
+      item.consumption_min && item.consumption_max
+        ? (item.consumption_min + item.consumption_max) / 2
+        : item.consumption_min || item.consumption_max || '';
+    const fuel = (item.fuel_type || '').toLowerCase();
+    let powertrain = powertrainType;
+    if (fuel.includes('electric')) powertrain = 'bev';
+    else if (fuel.includes('híbrido enchufable') || fuel.includes('hibrido enchufable')) powertrain = 'phev';
+    else if (fuel.includes('híbrido') || fuel.includes('hibrido')) powertrain = 'phev';
+    else if (fuel.includes('diesel') || fuel.includes('gasoleo') || fuel.includes('gasóleo')) powertrain = 'diesel';
+    else if (fuel.includes('gasolina')) powertrain = 'gasoline';
+
+    setMake(item.brand || '');
+    setModel(item.model || item.variant || '');
+    setSegment(item.category || 'generic');
+    setPowertrainType(powertrain);
+    if (powertrain === 'bev' || powertrain === 'phev') {
+      setConsumptionKwh(avgConsumption);
+    } else {
+      setConsumptionL(avgConsumption);
+    }
+    setSelectedCatalogId(String(item.id));
+  };
+
   const createVehicle = async () => {
     setError('');
     try {
@@ -163,6 +212,7 @@ export default function App() {
         current_km: newVehicle.current_km ? Number(newVehicle.current_km) : null,
         annual_km: newVehicle.annual_km ? Number(newVehicle.annual_km) : null,
         market_value_eur: newVehicle.market_value_eur ? Number(newVehicle.market_value_eur) : null,
+        catalog_vehicle_id: newVehicle.catalog_vehicle_id ? Number(newVehicle.catalog_vehicle_id) : null,
         consumption_l_per_100km: newVehicle.consumption_l_per_100km
           ? Number(newVehicle.consumption_l_per_100km)
           : null,
@@ -182,7 +232,7 @@ export default function App() {
         const data = await response.json();
         throw new Error(data.detail || 'Failed to create vehicle');
       }
-      setNewVehicle({ ...newVehicle, make: '', model: '', year: '' });
+      setNewVehicle({ ...newVehicle, make: '', model: '', year: '', catalog_vehicle_id: '' });
       fetchVehicles();
     } catch (err) {
       setError(err.message || 'Failed to create vehicle');
@@ -207,6 +257,7 @@ export default function App() {
         ? Math.min(Number(phevElectricKm) || 0, Number(tripKm) || 0) / (Number(tripKm) || 1)
         : null,
       market_value_eur: marketValue ? Number(marketValue) : null,
+      catalog_vehicle_id: selectedCatalogId ? Number(selectedCatalogId) : null,
       make,
       model,
       year: Number(year),
@@ -320,6 +371,9 @@ export default function App() {
     }
     if (selected.phev_electric_share) {
       setPhevElectricKm(selected.phev_electric_share * (Number(tripKm) || 0));
+    }
+    if (selected.catalog_vehicle_id) {
+      setSelectedCatalogId(String(selected.catalog_vehicle_id));
     }
   }, [vehicleId, vehicles]);
 
@@ -435,6 +489,30 @@ export default function App() {
             </div>
             <InputRow label="Vehiculo (para costes reales)" hint="marca + modelo">
               <div className="stack">
+                <input
+                  type="text"
+                  placeholder="Buscar en catalogo oficial (IDAE)"
+                  value={catalogQuery}
+                  onChange={(e) => {
+                    setCatalogQuery(e.target.value);
+                    fetchCatalog(e.target.value);
+                  }}
+                />
+                {catalogResults.length ? (
+                  <div className="catalog-list">
+                    {catalogResults.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="catalog-item"
+                        onClick={() => applyCatalogVehicle(item)}
+                      >
+                        <strong>{item.brand || 'Marca'} {item.model || item.variant}</strong>
+                        <span>{item.fuel_type || 'Combustible'} · WLTP {item.consumption_min || '--'}-{item.consumption_max || '--'}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
                 <input
                   type="text"
                   placeholder="Buscar por marca o modelo"
@@ -573,6 +651,13 @@ export default function App() {
                     type="number"
                     value={newVehicle.market_value_eur}
                     onChange={(e) => setNewVehicle({ ...newVehicle, market_value_eur: e.target.value })}
+                  />
+                </InputRow>
+                <InputRow label="Catalogo IDAE" hint="opcional">
+                  <input
+                    type="number"
+                    value={newVehicle.catalog_vehicle_id}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, catalog_vehicle_id: e.target.value })}
                   />
                 </InputRow>
                 {(newVehicle.powertrain_type === 'gasoline' ||

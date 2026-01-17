@@ -59,3 +59,7 @@
 
 - `backend/etl/import_kaggle.py`:
   - Loads maintenance templates and depreciation models from CSV.
+
+- `backend/etl/idae_catalog.py`:
+  - Descarga catalogo IDAE (WLTP) por marca/modelo.
+  - Crea `vehicle_catalog` para seleccion real de vehiculos.

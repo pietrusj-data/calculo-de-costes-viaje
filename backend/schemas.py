@@ -63,6 +63,7 @@ class VehicleInput(BaseModel):
     current_km: Optional[float] = None
     annual_km: Optional[float] = None
     segment: Optional[str] = "generic"
+    catalog_vehicle_id: Optional[int] = None
 
 
 class VehicleCreate(BaseModel):
@@ -78,10 +79,27 @@ class VehicleCreate(BaseModel):
     consumption_l_per_100km: Optional[float] = None
     consumption_kwh_per_100km: Optional[float] = None
     phev_electric_share: Optional[float] = None
+    catalog_vehicle_id: Optional[int] = None
 
 
 class VehicleResponse(VehicleCreate):
     id: int
+
+
+class CatalogVehicleResponse(BaseModel):
+    id: int
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    variant: Optional[str] = None
+    fuel_type: Optional[str] = None
+    category: Optional[str] = None
+    engine_cc: Optional[float] = None
+    classification: Optional[str] = None
+    consumption_min: Optional[float] = None
+    consumption_max: Optional[float] = None
+    emissions_min: Optional[float] = None
+    emissions_max: Optional[float] = None
+    source: Optional[str] = None
 
 
 class InsuranceInput(BaseModel):

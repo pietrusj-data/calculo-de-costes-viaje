@@ -34,6 +34,7 @@ class UserVehicle(Base):
     consumption_l_per_100km: Mapped[float | None] = mapped_column(Float)
     consumption_kwh_per_100km: Mapped[float | None] = mapped_column(Float)
     phev_electric_share: Mapped[float | None] = mapped_column(Float)
+    catalog_vehicle_id: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="vehicles")
@@ -104,3 +105,22 @@ class DepreciationModel(Base):
     annual_rate: Mapped[float] = mapped_column(Float, nullable=False)
     km_rate: Mapped[float] = mapped_column(Float, nullable=False)
     min_residual_pct: Mapped[float] = mapped_column(Float, nullable=False, default=0.2)
+
+
+class VehicleCatalog(Base):
+    __tablename__ = "vehicle_catalog"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    brand: Mapped[str | None] = mapped_column(String(80))
+    model: Mapped[str | None] = mapped_column(String(120))
+    variant: Mapped[str | None] = mapped_column(String(200))
+    fuel_type: Mapped[str | None] = mapped_column(String(40))
+    category: Mapped[str | None] = mapped_column(String(20))
+    engine_cc: Mapped[float | None] = mapped_column(Float)
+    classification: Mapped[str | None] = mapped_column(String(20))
+    consumption_min: Mapped[float | None] = mapped_column(Float)
+    consumption_max: Mapped[float | None] = mapped_column(Float)
+    emissions_min: Mapped[float | None] = mapped_column(Float)
+    emissions_max: Mapped[float | None] = mapped_column(Float)
+    source: Mapped[str] = mapped_column(String(40), default="idae")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

@@ -31,7 +31,17 @@ python -m venv .venv
 .\.venv\Scripts\python backend\seed.py
 ```
 
-Si ya existe `data/app.db` y quieres nuevas columnas (consumos medios, valor actual), borra el archivo y vuelve a ejecutar el seed.
+Si ya existe `data/app.db` y quieres nuevas columnas (consumos medios, valor actual, catalogo), borra el archivo y vuelve a ejecutar el seed.
+
+## Catalogo oficial IDAE (Espana)
+
+Para cargar el catalogo de consumo WLTP desde IDAE:
+
+```bash
+.\.venv\Scripts\python backend\etl\idae_catalog.py
+```
+
+Esto rellena `vehicle_catalog` y habilita la busqueda por marca/modelo en la UI.
 
 3) (Opcional) Actualizar precios oficiales de carburante en Espana:
 

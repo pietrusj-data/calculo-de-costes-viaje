@@ -263,6 +263,33 @@ select {
   gap: 0.6rem;
 }
 
+.catalog-list {
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: #fff;
+  max-height: 220px;
+  overflow-y: auto;
+  display: grid;
+}
+
+.catalog-item {
+  padding: 0.6rem 0.8rem;
+  display: grid;
+  gap: 0.2rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  text-align: left;
+  background: transparent;
+}
+
+.catalog-item:last-child {
+  border-bottom: none;
+}
+
+.catalog-item span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 .maintenance-list ul {
   list-style: none;
   padding: 0;
