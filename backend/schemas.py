@@ -93,6 +93,7 @@ class CatalogVehicleResponse(BaseModel):
     variant: Optional[str] = None
     fuel_type: Optional[str] = None
     category: Optional[str] = None
+    segment: Optional[str] = None
     engine_cc: Optional[float] = None
     classification: Optional[str] = None
     consumption_min: Optional[float] = None

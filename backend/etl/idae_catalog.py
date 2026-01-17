@@ -80,6 +80,29 @@ def _split_brand_model(variant: str, brands: list[str]) -> tuple[str | None, str
     return None, variant.strip()
 
 
+def _map_segment(category: str | None) -> str | None:
+    if not category:
+        return None
+    name = category.lower()
+    if "mini" in name:
+        return "mini"
+    if "peque" in name:
+        return "small"
+    if "berlina" in name or "familiares" in name or "medio" in name:
+        return "compact"
+    if "lujo" in name:
+        return "luxury"
+    if "monovol" in name:
+        return "minivan"
+    if "todoterreno" in name or "suv" in name:
+        return "suv"
+    if "furgoneta" in name or "chasis" in name:
+        return "van"
+    if "deportivo" in name:
+        return "sport"
+    return "generic"
+
+
 def _fetch_listado(
     client: IdAeSession,
     *,
@@ -116,6 +139,12 @@ def _iter_rows(client: IdAeSession, ciclo: str, filtros: dict[str, str]) -> Iter
 
 def build_catalog() -> list[VehicleCatalog]:
     client = _bootstrap_session()
+    client.session.headers.update(
+        {
+            "User-Agent": "VehicleAnalytics/1.0 (+https://github.com/pietrusj-data/calculo-de-costes-viaje)",
+            "Accept": "application/json,text/json,*/*",
+        }
+    )
     filtros = {
         "_token": client.token,
         "tipo": "marca-y-modelo",
@@ -168,6 +197,7 @@ def build_catalog() -> list[VehicleCatalog]:
             "classification": classification,
             "fuel_type": fuel_type or None,
             "category": category or None,
+            "segment": _map_segment(category),
             "engine_cc": engine_cc,
         }
 
@@ -183,6 +213,7 @@ def build_catalog() -> list[VehicleCatalog]:
                 variant=wltp.get("variant") or elec.get("variant"),
                 fuel_type=elec.get("fuel_type"),
                 category=elec.get("category"),
+                segment=elec.get("segment"),
                 engine_cc=elec.get("engine_cc"),
                 classification=wltp.get("classification") or elec.get("classification"),
                 consumption_min=wltp.get("consumption_min"),

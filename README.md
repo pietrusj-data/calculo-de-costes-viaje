@@ -43,6 +43,20 @@ Para cargar el catalogo de consumo WLTP desde IDAE:
 
 Esto rellena `vehicle_catalog` y habilita la busqueda por marca/modelo en la UI.
 
+## Catalogo privado (CSV)
+
+Importa un CSV propio con:
+
+```bash
+.\.venv\Scripts\python backend\etl\import_private_catalog.py --file C:\ruta\mi_catalogo.csv --source private --replace
+```
+
+Exportar el catalogo actual:
+
+```bash
+.\.venv\Scripts\python backend\etl\export_catalog_csv.py --out data\idae_catalog.csv
+```
+
 3) (Opcional) Actualizar precios oficiales de carburante en Espana:
 
 ```bash

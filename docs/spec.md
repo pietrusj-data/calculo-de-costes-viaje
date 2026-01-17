@@ -63,3 +63,9 @@
 - `backend/etl/idae_catalog.py`:
   - Descarga catalogo IDAE (WLTP) por marca/modelo.
   - Crea `vehicle_catalog` para seleccion real de vehiculos.
+
+- `backend/etl/export_catalog_csv.py`:
+  - Exporta `vehicle_catalog` a CSV.
+
+- `backend/etl/import_private_catalog.py`:
+  - Importa un catalogo privado desde CSV.

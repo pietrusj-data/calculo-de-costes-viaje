@@ -116,6 +116,7 @@ class VehicleCatalog(Base):
     variant: Mapped[str | None] = mapped_column(String(200))
     fuel_type: Mapped[str | None] = mapped_column(String(40))
     category: Mapped[str | None] = mapped_column(String(20))
+    segment: Mapped[str | None] = mapped_column(String(40))
     engine_cc: Mapped[float | None] = mapped_column(Float)
     classification: Mapped[str | None] = mapped_column(String(20))
     consumption_min: Mapped[float | None] = mapped_column(Float)

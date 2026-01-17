@@ -148,6 +148,7 @@ def search_catalog(query: str = "", limit: int = 20, db: Session = Depends(get_d
             variant=item.variant,
             fuel_type=item.fuel_type,
             category=item.category,
+            segment=item.segment,
             engine_cc=item.engine_cc,
             classification=item.classification,
             consumption_min=item.consumption_min,
